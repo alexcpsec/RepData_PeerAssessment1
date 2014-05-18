@@ -1,3 +1,7 @@
+---
+output:
+  html_document: default
+---
 # Reproducible Research: Peer Assessment 1
 
 Hi! Thanks for taking the time to review this assessment! We will require
@@ -20,12 +24,14 @@ df.activity = read.csv(unz("activity.zip", "activity.csv"), header=T,
                     colClasses=c("numeric", "Date", "numeric"))
 
 dt.activity = data.table(df.activity)
+rm(df.activity)
 dt.activity
 ```
 
 ## What is mean total number of steps taken per day?
 
 First of all, we need to combine all the steps that happened on each day
+
 ```{r, echo=TRUE}
 dt.totalsteps = dt.activity[, sum(steps, na.rm=T), by="date"]
 head(dt.totalsteps)
@@ -35,21 +41,36 @@ We can then create an histogram with the total steps data, and calculate their *
 and *median* values, while ignoring missing values of the data
 
 ```{r, echo=TRUE}
-hist_plot = qplot(dt.totalsteps$V1, geom="histogram", binwidth=3000,
-            main="Total Number of Steps per Day", xlab="Steps", fill=..count..)
-
-hist_plot
-
-steps.median = median(dt.totalsteps$V1)
-steps.median
-
-steps.mean = mean(dt.totalsteps$V1)
-steps.mean
+qplot(dt.totalsteps$V1, geom="histogram", binwidth=3000,
+      main="Total Number of Steps per Day", xlab="Steps", fill=..count..)
+median(dt.totalsteps$V1)
+mean(dt.totalsteps$V1)
 ```
 
 ## What is the average daily activity pattern?
 
+This time, instead of combining per day, we will combine the steps by each interval
+that we have available. on the dataset.
 
+```{r, echo=TRUE}
+dt.pattern = dt.activity[, sum(steps, na.rm=T), by="interval"]
+head(dt.pattern)
+```
+
+Now, we create a plot to help us visualize the pattern of daily activity averaged
+over all the days.
+
+```{r, echo=TRUE}
+qplot(interval, V1, data = dt.pattern, xlab="Interval", ylab="Number of Steps",
+       color=I("red"),  geom = "line", main="Daily Activity Pattern")
+```
+
+We can also figure out which interval is the one that contains the maximum number
+of stepts across all the days.
+
+```{r, echo=TRUE}
+dt.pattern[V1 == max(dt.pattern$V1)]$interval
+```
 
 ## Imputing missing values
 
