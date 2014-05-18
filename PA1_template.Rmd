@@ -1,13 +1,51 @@
 # Reproducible Research: Peer Assessment 1
 
+Hi! Thanks for taking the time to review this assessment! We will require
+the `ggplot2` and `data.table` libraries to knit this R Markdown document
+
+```{r, echo=TRUE}
+library(ggplot2)
+library(data.table)
+```
 
 ## Loading and preprocessing the data
 
+First of all, we will extract the ZIP file with the activity date and load it up
+on a data.frame object. We will pre-process and extract the step counts and intervals
+as `numeric` and the date information as a `Date` object to make computation easier  
 
+```{r, echo=TRUE}
+df.activity = read.csv(unz("activity.zip", "activity.csv"), header=T,
+                    sep=",", stringsAsFactors=F, na.strings="NA",
+                    colClasses=c("numeric", "Date", "numeric"))
+
+dt.activity = data.table(df.activity)
+dt.activity
+```
 
 ## What is mean total number of steps taken per day?
 
+First of all, we need to combine all the steps that happened on each day
+```{r, echo=TRUE}
+dt.totalsteps = dt.activity[, sum(steps, na.rm=T), by="date"]
+head(dt.totalsteps)
+```
 
+We can then create an histogram with the total steps data, and calculate their *mean* 
+and *median* values, while ignoring missing values of the data
+
+```{r, echo=TRUE}
+hist_plot = qplot(dt.totalsteps$V1, geom="histogram", binwidth=3000,
+            main="Total Number of Steps per Day", xlab="Steps", fill=..count..)
+
+hist_plot
+
+steps.median = median(dt.totalsteps$V1)
+steps.median
+
+steps.mean = mean(dt.totalsteps$V1)
+steps.mean
+```
 
 ## What is the average daily activity pattern?
 
