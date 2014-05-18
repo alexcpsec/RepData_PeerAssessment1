@@ -53,7 +53,7 @@ This time, instead of combining per day, we will combine the steps by each inter
 that we have available. on the dataset.
 
 ```{r, echo=TRUE}
-dt.pattern = dt.activity[, sum(steps, na.rm=T), by="interval"]
+dt.pattern = dt.activity[, sum(steps, na.rm=T)/.N, by="interval"]
 head(dt.pattern)
 ```
 
@@ -74,6 +74,67 @@ dt.pattern[V1 == max(dt.pattern$V1)]$interval
 
 ## Imputing missing values
 
+First, let us verify what is the number of missing values in the dataset.
 
+```{r, echo=TRUE}
+sum(is.na(dt.activity$steps))
+```
+
+We will fill these missing vaules by using the mean of the specific 5-minute interval
+as a replacement for the missing value. I already have these quantities calculated
+in the `dt.pattern` table.
+
+```{r, echo=TRUE}
+dt.nomissing = copy(dt.activity)
+dt.nomissing[is.na(steps), steps := dt.pattern[dt.pattern$interval == interval]$V1]
+sum(is.na(dt.nomissing$steps))
+```
+
+Now, we again create an histogram with the total steps data, and calculate their *mean* 
+and *median* values to verify the changes we made on the dataset.
+
+```{r, echo=TRUE}
+dt.totalsteps.noNA = dt.nomissing[, sum(steps, na.rm=T), by="date"]
+head(dt.totalsteps.noNA)
+qplot(dt.totalsteps.noNA$V1, geom="histogram", binwidth=3000,
+      main="Total Number of Steps per Day (no NAs)", xlab="Steps", fill=..count..)
+median(dt.totalsteps.noNA$V1)
+mean(dt.totalsteps.noNA$V1)
+```
+
+As a result from this change, the mean got really close to the median, and the
+shape of the histogram got much closer to a bell shape. The concentration of
+days with less then 3000 steps got really small, as most of them were filled with
+missing values, and that went to the bucket that contains the mean and median.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+First, let us separate our dates in weekdays and weekends so we can start splitting
+the interval counts among them. For this we will create a factor variable and
+add it to the dataset
+
+```{r, echo=TRUE}
+activity.weekdays = weekdays(dt.activity$date)
+factor.weekday = factor( ifelse(activity.weekdays == "Saturday" 
+                                | activity.weekdays == "Sunday",
+                                "weekend",
+                                "weekday"),
+                         levels = c("weekend","weekday"))
+dt.activity[, weekstatus := factor.weekday]
+```
+
+We then proceed to do some aggregating magic with our data.table
+
+```{r, echo=TRUE}
+dt.pattern.week = dt.activity[, sum(steps, na.rm=T)/.N, by=c("weekstatus", "interval")]
+head(dt.pattern.week)
+```
+
+Now, we create a plot to help us visualize the pattern of daily activity averaged
+over weekends and weekdays.
+
+```{r, echo=TRUE}
+qplot(interval, V1, data = dt.pattern.week, facets = weekstatus ~ .,
+      xlab="Interval", ylab="Number of Steps",
+      color=I("red"),  geom = "line", main="Daily Activity Pattern")
+``````
